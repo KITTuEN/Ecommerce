@@ -160,7 +160,34 @@ def index():
     if category_filter:
         sidebar_query['category'] = category_filter
         
-    categories = db.products.distinct('category') # Categories should always be all visible
+    # Get all distinct values for sidebar filters, respecting the current category
+    sidebar_query = {}
+    if category_filter:
+        sidebar_query['category'] = category_filter
+        
+    # Fetch distinct categories from products to ensure we only show active categories
+    distinct_categories = db.products.distinct('category')
+    
+    # Fetch category metadata (images) from categories collection
+    categories_metadata = list(db.categories.find({'name': {'$in': distinct_categories}}))
+    
+    # Construct categories list with images
+    categories = []
+    for cat_name in distinct_categories:
+        if cat_name == 'Clothing':
+            continue
+        cat_data = next((c for c in categories_metadata if c['name'] == cat_name), None)
+        image_url = cat_data.get('image_url') if cat_data else None
+        
+        # Fallback placeholder if no image
+        if not image_url:
+            image_url = 'https://via.placeholder.com/300x200?text=' + cat_name.title()
+            
+        categories.append({
+            'name': cat_name,
+            'image_url': image_url
+        })
+
     brands = db.products.distinct('brand', sidebar_query)
     colors = db.products.distinct('color', sidebar_query)
     fabrics = db.products.distinct('fabric', sidebar_query)

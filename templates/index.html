@@ -203,6 +203,16 @@
             color: var(--text-dark);
         }
 
+        /* Category Cards */
+        .hover-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .hover-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+        }
+
         /* Sidebar Filters */
         .filter-card {
             background: white;
@@ -324,10 +334,6 @@
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('cart') }}"><i
                                 class="fas fa-shopping-cart"></i></a></li>
                     {% endif %}
-                    {% if session.get('role') == 'admin' %}
-                    <li class="nav-item"><a class="nav-link badge bg-dark text-white ms-2"
-                            href="{{ url_for('admin_dashboard') }}">Admin</a></li>
-                    {% endif %}
                 </ul>
             </div>
         </div>
@@ -355,25 +361,40 @@
             </div>
         </div>
 
+        <!-- Shop by Category Section -->
+        {% if not selected_category %}
+        <div class="mb-5">
+            <h3 class="mb-4 fw-bold">Shop by Category</h3>
+            <div class="row row-cols-2 row-cols-md-3 row-cols-lg-6 g-3">
+                {% for category in categories %}
+                <div class="col">
+                    <a href="{{ url_for('index', category=category.name) }}" class="text-decoration-none text-dark">
+                        <div class="card h-100 border-0 shadow-sm text-center hover-card">
+                            <div class="ratio ratio-1x1 rounded-circle overflow-hidden mx-auto mt-3"
+                                style="width: 100px;">
+                                <img src="{{ category.image_url }}" class="object-fit-cover" alt="{{ category.name }}">
+                            </div>
+                            <div class="card-body p-2">
+                                <h6 class="card-title fw-semibold mb-0">{{ category.name|title }}</h6>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
         <div class="row" id="shop-section">
+            {% if selected_category %}
             <!-- Sidebar Filters -->
             <div class="col-lg-3 mb-4">
                 <div class="filter-card sticky-top" style="top: 100px; z-index: 1;">
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary w-100 mb-3 rounded-pill">
+                        <i class="fas fa-arrow-left me-2"></i> Back to Home
+                    </a>
                     <div class="filter-title">Filters</div>
 
-                    <div class="filter-group-title">Categories</div>
-                    <ul class="filter-list">
-                        <li><a href="{{ url_for('index') }}"
-                                class="filter-link {{ 'active' if not selected_category else '' }}">All Categories</a>
-                        </li>
-                        {% for category in categories %}
-                        <li><a href="{{ url_for('index', category=category) }}"
-                                class="filter-link {{ 'active' if selected_category == category else '' }}">{{
-                                category|title }}</a></li>
-                        {% endfor %}
-                    </ul>
-
-                    {% if selected_category %}
                     <!-- Brand Filter -->
                     <div class="filter-group-title">Brand</div>
                     <ul class="filter-list">
@@ -420,12 +441,12 @@
                                 class="filter-link {{ 'active' if selected_size == size else '' }}">{{ size }}</a></li>
                         {% endfor %}
                     </ul>
-                    {% endif %}
                 </div>
             </div>
+            {% endif %}
 
             <!-- Product Grid -->
-            <div class="col-lg-9">
+            <div class="{{ 'col-lg-9' if selected_category else 'col-lg-12' }}">
                 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
                     {% for product in products %}
                     <div class="col">
