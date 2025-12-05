@@ -176,8 +176,8 @@ def index():
     
     return render_template('index.html', products=products, 
                          categories=categories, brands=brands, colors=colors, fabrics=fabrics, sizes=sizes,
-                         current_category=category_filter, current_brand=brand_filter, 
-                         current_color=color_filter, current_fabric=fabric_filter, current_size=size_filter,
+                         selected_category=category_filter, selected_brand=brand_filter, 
+                         selected_color=color_filter, selected_fabric=fabric_filter, selected_size=size_filter,
                          current_sort=sort_by, search_query=search_query,
                          recommendations=recommendations,
                          current_page=page, total_pages=total_pages)
@@ -510,10 +510,12 @@ def update_cart(product_id):
     if 'cart' in session:
         quantity = int(request.form.get('quantity'))
         size = request.form.get('size')
+        if size == 'None':
+            size = None
         color = request.form.get('color')
         
         for item in session['cart']:
-            if item['product_id'] == product_id and item.get('size') == size and item.get('color') == color:
+            if item['product_id'] == product_id and item.get('size') == size:
                 item['quantity'] = quantity
                 break
         session.modified = True
