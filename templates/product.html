@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.name }} - Men's Shop</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --text-dark: #2c3e50;
+            --text-muted: #6c757d;
+            --bg-light: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f7fa;
+            color: var(--text-dark);
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        .navbar-brand {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+            padding: 1rem 0;
+        }
+
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            color: var(--text-dark);
+            margin: 0 0.5rem;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-color);
+        }
+
+        /* Product Detail */
+        .product-detail-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .product-image-container {
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .product-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+
+        .product-image:hover {
+            transform: scale(1.02);
+        }
+
+        .product-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-category {
+            font-size: 1rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 1.5rem;
+        }
+
+        .product-price {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .product-description {
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+        }
+
+        .form-select {
+            padding: 0.8rem 1rem;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-add-cart {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+
+        .btn-add-cart:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+
+        .btn-wishlist {
+            background: white;
+            color: var(--text-dark);
+            border: 2px solid #e0e0e0;
+            padding: 1rem;
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+
+        .btn-wishlist:hover {
+            border-color: #f5576c;
+            color: #f5576c;
+            background: #fff5f6;
+        }
+
+        /* Reviews Section */
+        .reviews-section {
+            margin-top: 4rem;
+        }
+
+        .review-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+        }
+
+        .review-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .reviewer-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .review-date {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .star-rating {
+            color: #ffc107;
+        }
+
+        /* Footer */
+        footer {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-top: 5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">Men's Shop</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Home</a></li>
+                    {% if session.get('user_id') %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('wishlist') }}" title="Wishlist"><i
+                                class="fas fa-heart"></i></a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('profile') }}" title="Profile"><i
+                                class="fas fa-user"></i></a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('cart') }}" title="Cart"><i
+                                class="fas fa-shopping-cart"></i></a></li>
+                    <li class="nav-item"><a class="nav-link btn btn-sm btn-outline-danger ms-2 text-danger"
+                            href="{{ url_for('logout') }}"
+                            style="border: 1px solid #dc3545; padding: 5px 15px;">Logout</a></li>
+                    {% else %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Login</a></li>
+                    <li class="nav-item"><a class="nav-link btn btn-primary text-white ms-2 px-3 py-1"
+                            href="{{ url_for('register') }}" style="background: var(--primary-color);">Sign Up</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('cart') }}"><i
+                                class="fas fa-shopping-cart"></i></a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mb-5">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show mt-3" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <div class="product-detail-card">
+            <div class="row g-5">
+                <!-- Product Image -->
+                <div class="col-lg-6">
+                    <div class="product-image-container">
+                        <img src="{{ product.image_url }}" alt="{{ product.name }}" class="product-image">
+                    </div>
+                </div>
+
+                <!-- Product Info -->
+                <div class="col-lg-6">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('index', category=product.category) }}">{{
+                                    product.category|title }}</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
+                        </ol>
+                    </nav>
+
+                    <h1 class="product-title">{{ product.name }}</h1>
+                    <p class="product-category">
+                        Brand: <strong>{{ product.brand|title }}</strong> |
+                        Fabric: <strong>{{ product.fabric|title }}</strong>
+                    </p>
+
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="product-price me-3">₹{{ product.price }}</div>
+                        {% if product.stock > 0 %}
+                        <span class="badge bg-success">In Stock</span>
+                        {% else %}
+                        <span class="badge bg-danger">Out of Stock</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="product-description">
+                        <h5>Description</h5>
+                        <p>{{ product.description }}</p>
+                    </div>
+
+                    <form action="{{ url_for('add_to_cart', product_id=product['_id']) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Select Size</label>
+                            <div class="d-flex gap-2">
+                                {% for size in product.sizes %}
+                                {% set size_val = size.size if size is mapping else size %}
+                                <input type="radio" class="btn-check" name="size" id="size-{{ size_val }}"
+                                    value="{{ size_val }}" required>
+                                <label class="btn btn-outline-secondary px-3" for="size-{{ size_val }}">{{ size_val
+                                    }}</label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Select Color</label>
+                            <div class="d-flex gap-2">
+                                {% for color in product.colors %}
+                                <input type="radio" class="btn-check" name="color" id="color-{{ color }}"
+                                    value="{{ color }}" required>
+                                <label class="btn btn-outline-secondary px-3" for="color-{{ color }}">{{ color|title
+                                    }}</label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="row g-2">
+                            <div class="col-10">
+                                <button type="submit" class="btn btn-add-cart" {{ 'disabled' if product.stock==0 else ''
+                                    }}>
+                                    <i class="fas fa-shopping-cart me-2"></i> Add to Cart
+                                </button>
+                            </div>
+                            <div class="col-2">
+                                <button type="submit"
+                                    formaction="{{ url_for('add_to_wishlist', product_id=product['_id']) }}"
+                                    formnovalidate
+                                    class="btn btn-wishlist w-100 h-100 d-flex justify-content-center align-items-center"
+                                    title="Add to Wishlist">
+                                    <i class="far fa-heart fa-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div class="reviews-section">
+            <h3 class="fw-bold mb-4">Customer Reviews</h3>
+
+            {% if reviews %}
+            {% for review in reviews %}
+            <div class="review-card">
+                <div class="review-header">
+                    <div class="reviewer-name">{{ review.user_name }}</div>
+                    <div class="star-rating">
+                        {% for i in range(review.rating) %}
+                        <i class="fas fa-star"></i>
+                        {% endfor %}
+                        {% for i in range(5 - review.rating) %}
+                        <i class="far fa-star"></i>
+                        {% endfor %}
+                    </div>
+                </div>
+                <p class="mb-0">{{ review.comment }}</p>
+                <small class="text-muted mt-2 d-block">{{ review.created_at.strftime('%B %d, %Y') }}</small>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="text-center py-5 bg-white rounded-3 shadow-sm">
+                <i class="far fa-comment-dots fa-3x text-muted mb-3"></i>
+                <p class="text-muted">No reviews yet. Be the first to review this product!</p>
+                {% if session.get('user_id') %}
+                <a href="{{ url_for('add_review', product_id=product['_id']) }}"
+                    class="btn btn-outline-primary mt-2">Write a Review</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12 text-center">
+                    <p class="mb-0">&copy; 2023 Men's Shop. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
