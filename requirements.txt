@@ -1,0 +1,5 @@
+Flask
+pymongo[srv]
+certifi
+Flask-WTF
+dnspython
