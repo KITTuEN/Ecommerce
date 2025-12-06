@@ -4,3 +4,4 @@ certifi
 Flask-WTF
 dnspython
 gunicorn
+requests

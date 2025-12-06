@@ -387,66 +387,104 @@
 
         <div class="row" id="shop-section">
             {% if selected_category %}
-            <!-- Sidebar Filters -->
-            <div class="col-lg-3 mb-4">
-                <div class="filter-card sticky-top" style="top: 100px; z-index: 1;">
-                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary w-100 mb-3 rounded-pill">
+            <!-- Filter Toolbar -->
+            <div class="col-12 mb-4">
+                <div class="d-flex flex-wrap align-items-center gap-2 p-3 bg-white rounded shadow-sm">
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary rounded-pill me-2">
                         <i class="fas fa-arrow-left me-2"></i> Back to Home
                     </a>
-                    <div class="filter-title">Filters</div>
 
-                    <!-- Brand Filter -->
-                    <div class="filter-group-title">Brand</div>
-                    <ul class="filter-list">
-                        <li><a href="{{ url_for('index', category=selected_category) }}"
-                                class="filter-link {{ 'active' if not selected_brand else '' }}">All Brands</a></li>
-                        {% for brand in brands %}
-                        <li><a href="{{ url_for('index', category=selected_category, brand=brand, color=selected_color, fabric=selected_fabric, size=selected_size) }}"
-                                class="filter-link {{ 'active' if selected_brand == brand else '' }}">{{ brand|title
-                                }}</a></li>
-                        {% endfor %}
-                    </ul>
+                    <div class="vr mx-2"></div>
 
-                    <!-- Color Filter -->
-                    <div class="filter-group-title">Color</div>
-                    <ul class="filter-list">
-                        <li><a href="{{ url_for('index', category=selected_category, brand=selected_brand, fabric=selected_fabric, size=selected_size) }}"
-                                class="filter-link {{ 'active' if not selected_color else '' }}">All Colors</a></li>
-                        {% for color in colors %}
-                        <li><a href="{{ url_for('index', category=selected_category, brand=selected_brand, color=color, fabric=selected_fabric, size=selected_size) }}"
-                                class="filter-link {{ 'active' if selected_color == color else '' }}">{{ color|title
-                                }}</a></li>
-                        {% endfor %}
-                    </ul>
+                    <!-- Brand Dropdown -->
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle rounded-pill" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            {{ 'Brand: ' + selected_brand|title if selected_brand else 'Brand' }}
+                        </button>
+                        <ul class="dropdown-menu shadow">
+                            <li><a class="dropdown-item {{ 'active' if not selected_brand else '' }}"
+                                    href="{{ url_for('index', category=selected_category, color=selected_color, fabric=selected_fabric, size=selected_size) }}">All
+                                    Brands</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            {% for brand in brands %}
+                            <li><a class="dropdown-item {{ 'active' if selected_brand == brand else '' }}"
+                                    href="{{ url_for('index', category=selected_category, brand=brand, color=selected_color, fabric=selected_fabric, size=selected_size) }}">{{
+                                    brand|title }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
 
-                    <!-- Fabric Filter -->
-                    <div class="filter-group-title">Fabric</div>
-                    <ul class="filter-list">
-                        <li><a href="{{ url_for('index', category=selected_category, brand=selected_brand, color=selected_color, size=selected_size) }}"
-                                class="filter-link {{ 'active' if not selected_fabric else '' }}">All Fabrics</a></li>
-                        {% for fabric in fabrics %}
-                        <li><a href="{{ url_for('index', category=selected_category, brand=selected_brand, color=selected_color, fabric=fabric, size=selected_size) }}"
-                                class="filter-link {{ 'active' if selected_fabric == fabric else '' }}">{{ fabric|title
-                                }}</a></li>
-                        {% endfor %}
-                    </ul>
+                    <!-- Color Dropdown -->
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle rounded-pill" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            {{ 'Color: ' + selected_color|title if selected_color else 'Color' }}
+                        </button>
+                        <ul class="dropdown-menu shadow">
+                            <li><a class="dropdown-item {{ 'active' if not selected_color else '' }}"
+                                    href="{{ url_for('index', category=selected_category, brand=selected_brand, fabric=selected_fabric, size=selected_size) }}">All
+                                    Colors</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            {% for color in colors %}
+                            <li><a class="dropdown-item {{ 'active' if selected_color == color else '' }}"
+                                    href="{{ url_for('index', category=selected_category, brand=selected_brand, color=color, fabric=selected_fabric, size=selected_size) }}">{{
+                                    color|title }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
 
-                    <!-- Size Filter -->
-                    <div class="filter-group-title">Size</div>
-                    <ul class="filter-list">
-                        <li><a href="{{ url_for('index', category=selected_category, brand=selected_brand, color=selected_color, fabric=selected_fabric) }}"
-                                class="filter-link {{ 'active' if not selected_size else '' }}">All Sizes</a></li>
-                        {% for size in sizes %}
-                        <li><a href="{{ url_for('index', category=selected_category, brand=selected_brand, color=selected_color, fabric=selected_fabric, size=size) }}"
-                                class="filter-link {{ 'active' if selected_size == size else '' }}">{{ size }}</a></li>
-                        {% endfor %}
-                    </ul>
+                    <!-- Fabric Dropdown -->
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle rounded-pill" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            {{ 'Fabric: ' + selected_fabric|title if selected_fabric else 'Fabric' }}
+                        </button>
+                        <ul class="dropdown-menu shadow">
+                            <li><a class="dropdown-item {{ 'active' if not selected_fabric else '' }}"
+                                    href="{{ url_for('index', category=selected_category, brand=selected_brand, color=selected_color, size=selected_size) }}">All
+                                    Fabrics</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            {% for fabric in fabrics %}
+                            <li><a class="dropdown-item {{ 'active' if selected_fabric == fabric else '' }}"
+                                    href="{{ url_for('index', category=selected_category, brand=selected_brand, color=selected_color, fabric=fabric, size=selected_size) }}">{{
+                                    fabric|title }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <!-- Size Dropdown -->
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle rounded-pill" type="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            {{ 'Size: ' + selected_size if selected_size else 'Size' }}
+                        </button>
+                        <ul class="dropdown-menu shadow">
+                            <li><a class="dropdown-item {{ 'active' if not selected_size else '' }}"
+                                    href="{{ url_for('index', category=selected_category, brand=selected_brand, color=selected_color, fabric=selected_fabric) }}">All
+                                    Sizes</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            {% for size in sizes %}
+                            <li><a class="dropdown-item {{ 'active' if selected_size == size else '' }}"
+                                    href="{{ url_for('index', category=selected_category, brand=selected_brand, color=selected_color, fabric=selected_fabric, size=size) }}">{{
+                                    size }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
                 </div>
             </div>
             {% endif %}
 
             <!-- Product Grid -->
-            <div class="{{ 'col-lg-9' if selected_category else 'col-lg-12' }}">
+            <div class="col-lg-12">
                 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
                     {% for product in products %}
                     <div class="col">

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from pymongo import MongoClient
 import os
@@ -7,6 +7,9 @@ import gridfs
 from bson.objectid import ObjectId
 import datetime
 import uuid
+import re
+import math
+import requests
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Change this to a random secret key
@@ -46,7 +49,30 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Recommendation Logic
+@app.route('/api/calculate_shipping', methods=['POST'])
+def calculate_shipping():
+    data = request.get_json()
+    # Address details are no longer needed for calculation but might be passed
+    
+    delivery_fee = 0
+    total_quantity = 0
+    
+    if 'cart' in session:
+        for item in session['cart']:
+            total_quantity += item['quantity']
+            
+    # If cart is empty, return 0
+    if total_quantity == 0:
+        return jsonify({'delivery_fee': 0})
+
+    # Logic: 1 item = Standard Fee, >1 item = Free
+    if total_quantity > 1:
+        delivery_fee = 0
+    else:
+        settings = db.settings.find_one({'type': 'store_settings'})
+        delivery_fee = float(settings.get('standard_delivery_fee', 69.0)) if settings else 69.0
+            
+    return jsonify({'delivery_fee': delivery_fee})
 def get_user_recommendations(user_id):
     # 1. Get user's recent activity (searches, views - implied by orders for now)
     recent_orders = list(db.orders.find({'user_id': user_id}).sort('created_at', -1).limit(5))
@@ -99,13 +125,23 @@ def index():
     query = {}
     search_query = request.args.get('q', '')
     if search_query:
-        query['$or'] = [
-            {'name': {'$regex': search_query, '$options': 'i'}},
-            {'description': {'$regex': search_query, '$options': 'i'}},
-            {'brand': {'$regex': search_query, '$options': 'i'}}, # Search in brand too
-            {'color': {'$regex': search_query, '$options': 'i'}}, # Search in color too
-            {'fabric': {'$regex': search_query, '$options': 'i'}} # Search in fabric too
-        ]
+        terms = search_query.split()
+        if terms:
+            and_conditions = []
+            for term in terms:
+                escaped_term = re.escape(term)
+                and_conditions.append({
+                    '$or': [
+                        {'name': {'$regex': escaped_term, '$options': 'i'}},
+                        {'description': {'$regex': escaped_term, '$options': 'i'}},
+                        {'brand': {'$regex': escaped_term, '$options': 'i'}},
+                        {'category': {'$regex': escaped_term, '$options': 'i'}},
+                        {'color': {'$regex': escaped_term, '$options': 'i'}},
+                        {'fabric': {'$regex': escaped_term, '$options': 'i'}},
+                        {'sizes.size': {'$regex': escaped_term, '$options': 'i'}}
+                    ]
+                })
+            query['$and'] = and_conditions
         
         # Track Search if Logged In
         if 'user_id' in session:
@@ -356,6 +392,8 @@ def checkout():
         # Re-fetch items to ensure we save current details (snapshot) and validate stock
         order_items = []
         calculated_total = 0
+        total_weight = 0
+        has_paid_delivery_items = False
         
         for item in session['cart']:
             product = db.products.find_one({'_id': ObjectId(item['product_id'])})
@@ -382,31 +420,25 @@ def checkout():
                 flash(f"Sorry, {product['name']} (Size: {requested_size}) is out of stock or requested quantity unavailable.", 'error')
                 return redirect(url_for('cart'))
                 
+            # Delivery Fee Logic Data Collection
+            if not product.get('free_delivery', False):
+                has_paid_delivery_items = True
+                total_weight += product.get('weight', 0.5) * item['quantity']
+
             order_items.append({
                 'product_id': item['product_id'],
                 'name': product['name'],
                 'price': product['price'],
                 'quantity': item['quantity'],
                 'size': requested_size,
-                'image_url': product['image_url']
+                'image_url': product['image_url'],
+                'free_delivery': product.get('free_delivery', False)
             })
             calculated_total += product['price'] * item['quantity']
             
-            # Stock deduction moved to approve_order
-            # if product.get('sizes') and isinstance(product['sizes'], list) and isinstance(product['sizes'][0], dict):
-            #      # Deduct from specific size AND total stock
-            #      db.products.update_one(
-            #         {'_id': ObjectId(item['product_id']), 'sizes.size': requested_size},
-            #         {
-            #             '$inc': {'stock': -item['quantity'], 'sizes.$.stock': -item['quantity']}
-            #         }
-            #      )
-            # else:
-            #     # Fallback
-            #     db.products.update_one(
-            #         {'_id': ObjectId(item['product_id'])},
-            #         {'$inc': {'stock': -item['quantity']}}
-            #     )
+        # Delivery Fee will be calculated based on distance
+        delivery_fee = 0 # Placeholder, will be updated
+        final_total = calculated_total + delivery_fee
 
         # Generate Unique Order ID
         order_id = f"ORD-{datetime.datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:4].upper()}"
@@ -416,11 +448,15 @@ def checkout():
             'order_id': order_id,
             'user_id': session.get('user_id'),
             'items': order_items, # Save full details
-            'total_amount': calculated_total,
+            'subtotal': calculated_total,
+            'delivery_fee': delivery_fee,
+            'total_amount': final_total,
             'shipping_details': {
                 'name': request.form['name'],
+                'phone': request.form['phone'],
                 'address': request.form['address'],
                 'city': request.form['city'],
+                'state': request.form['state'],
                 'zip': request.form['zip']
             },
             'payment_method': 'COD',
@@ -428,11 +464,52 @@ def checkout():
             'status': 'Pending Approval',
             'created_at': datetime.datetime.now()
         }
+        # Update User Address
+        db.users.update_one(
+            {'_id': ObjectId(session.get('user_id'))},
+            {'$set': {
+                'name': request.form['name'],
+                'phone': request.form['phone'],
+                'address': request.form['address'],
+                'city': request.form['city'],
+                'state': request.form['state'],
+                'zip': request.form['zip']
+            }}
+        )
+
+        # Calculate Delivery Fee
+        delivery_fee = 0
+        total_quantity = sum(item['quantity'] for item in order_items)
+        
+        # Logic: 1 item = Standard Fee, >1 item = Free
+        if total_quantity > 1:
+            delivery_fee = 0
+        else:
+            # Only apply fee if there are paid delivery items (though with new logic, maybe it applies regardless? 
+            # The prompt said "set the minimum delivery fees to 69 rupees if more than one item there is free delivery".
+            # Assuming this applies generally or still respects free_delivery flag? 
+            # Let's assume it respects the flag: if has_paid_delivery_items is True AND quantity == 1.
+            if has_paid_delivery_items:
+                settings = db.settings.find_one({'type': 'store_settings'})
+                delivery_fee = float(settings.get('standard_delivery_fee', 69.0)) if settings else 69.0
+        
+        final_total = calculated_total + delivery_fee
+        
+        # Update order with calculated fee
+        order['delivery_fee'] = delivery_fee
+        order['total_amount'] = final_total
+        
         db.orders.insert_one(order)
         session.pop('cart', None)
+        session['last_order_id'] = order_id
         return redirect(url_for('success'))
         
-    return render_template('checkout.html', cart_items=cart_items, total_price=total_price)
+    # Calculate estimated delivery fee for display (GET request)
+    estimated_delivery_fee = 0
+    # Delivery is FREE
+
+    current_user = db.users.find_one({'_id': ObjectId(session['user_id'])})
+    return render_template('checkout.html', cart_items=cart_items, total_price=total_price, estimated_delivery_fee=estimated_delivery_fee, user=current_user)
 
 
 @app.route('/my_orders')
@@ -448,7 +525,44 @@ def my_orders():
     total_pages = (total_orders + per_page - 1) // per_page
     
     orders = list(db.orders.find({'user_id': user_id}).sort('_id', -1).skip(skip).limit(per_page)) 
+    orders = list(db.orders.find({'user_id': user_id}).sort('_id', -1).skip(skip).limit(per_page)) 
     return render_template('my_orders.html', orders=orders, current_page=page, total_pages=total_pages)
+
+
+
+@app.route('/admin/settings', methods=['GET', 'POST'])
+def admin_settings():
+    if 'user_id' not in session or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+        
+    if request.method == 'POST':
+        address = request.form.get('address')
+        company_name = request.form.get('company_name')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        zip_code = request.form.get('zip_code')
+        delivery_cost = float(request.form.get('delivery_cost', 0))
+        api_key = request.form.get('api_key')
+        
+        db.settings.update_one(
+            {'type': 'store_settings'},
+            {'$set': {
+                'address': address, 
+                'company_name': company_name,
+                'email': email,
+                'phone': phone,
+                'zip_code': zip_code, 
+                'delivery_cost': delivery_cost, 
+                'api_key': api_key,
+                'type': 'store_settings'
+            }},
+            upsert=True
+        )
+        flash('Settings updated successfully.', 'success')
+        return redirect(url_for('admin_settings'))
+        
+    settings = db.settings.find_one({'type': 'store_settings'})
+    return render_template('admin/seller_settings.html', settings=settings)
 
 @app.route('/order/<order_id>')
 @login_required
@@ -471,7 +585,8 @@ def order_details(order_id):
             flash('Order not found.', 'error')
             return redirect(url_for('my_orders'))
             
-        return render_template('order_details.html', order=order)
+        settings = db.settings.find_one({'type': 'store_settings'})
+        return render_template('order_details.html', order=order, settings=settings)
     except Exception as e:
         print(f"Error fetching order details: {e}")
         import traceback
@@ -530,7 +645,33 @@ def profile():
 
 @app.route('/success')
 def success():
-    return render_template('success.html')
+    order_id = session.get('last_order_id')
+    order = None
+    if order_id:
+        order = db.orders.find_one({'order_id': order_id})
+    
+    estimated_delivery = None
+    if order:
+        # Calculate estimated delivery (5 days from order generation time)
+        estimated_delivery = (order['_id'].generation_time + datetime.timedelta(days=5)).strftime('%d %b %Y')
+        
+    return render_template('success.html', order=order, estimated_delivery=estimated_delivery)
+
+@app.route('/invoice/<order_id>')
+@login_required
+def invoice(order_id):
+    # Try to find by ObjectId first, then by order_id string
+    try:
+        order = db.orders.find_one({'_id': ObjectId(order_id), 'user_id': session['user_id']})
+    except:
+        order = db.orders.find_one({'order_id': order_id, 'user_id': session['user_id']})
+        
+    if not order:
+        flash('Order not found.', 'error')
+        return redirect(url_for('my_orders'))
+        
+    settings = db.settings.find_one({'type': 'store_settings'})
+    return render_template('invoice.html', order=order, settings=settings)
 
 @app.route('/update_cart/<product_id>', methods=['POST'])
 def update_cart(product_id):
@@ -552,6 +693,9 @@ def update_cart(product_id):
 def cart():
     cart_items = []
     total_price = 0
+    # Delivery is FREE
+    estimated_delivery_fee = 0
+    
     if 'cart' in session:
         for item in session['cart']:
             product = db.products.find_one({'_id': ObjectId(item['product_id'])})
@@ -561,7 +705,8 @@ def cart():
                 product['total'] = product['price'] * item['quantity']
                 cart_items.append(product)
                 total_price += product['total']
-    return render_template('cart.html', cart_items=cart_items, total_price=total_price)
+        
+    return render_template('cart.html', cart_items=cart_items, total_price=total_price, estimated_delivery_fee=estimated_delivery_fee)
 
 @app.route('/add_to_cart/<product_id>', methods=['POST'])
 def add_to_cart(product_id):
@@ -673,19 +818,48 @@ def remove_from_wishlist(product_id):
     flash('Removed from wishlist.', 'success')
     return redirect(url_for('wishlist'))
 
-@app.route('/request_return/<order_id>')
+@app.route('/request_return/<order_id>', methods=['GET', 'POST'])
 @login_required
 def request_return(order_id):
     order = db.orders.find_one({'_id': ObjectId(order_id), 'user_id': session['user_id']})
-    if order and order['status'] == 'Shipped':
+    
+    if not order:
+        flash('Order not found.', 'error')
+        return redirect(url_for('my_orders'))
+        
+    if order['status'] != 'Delivered':
+        flash('Return request failed. Order must be delivered to request return.', 'error')
+        return redirect(url_for('my_orders'))
+
+    if request.method == 'POST':
+        reason = request.form.get('reason')
+        condition = request.form.get('condition')
+        comments = request.form.get('comments')
+        
+        if not reason or not condition:
+            flash('Please select a reason and item condition.', 'error')
+            return redirect(url_for('request_return', order_id=order_id))
+            
+        return_details = {
+            'reason': reason,
+            'condition': condition,
+            'comments': comments,
+            'requested_at': datetime.datetime.now()
+        }
+        
         db.orders.update_one(
             {'_id': ObjectId(order_id)},
-            {'$set': {'status': 'Return Requested'}}
+            {
+                '$set': {
+                    'status': 'Return Requested',
+                    'return_details': return_details
+                }
+            }
         )
         flash('Return requested successfully. Waiting for admin approval.', 'success')
-    else:
-        flash('Return request failed. Order must be shipped to request return.', 'error')
-    return redirect(url_for('my_orders'))
+        return redirect(url_for('my_orders'))
+        
+    return render_template('return_request.html', order=order)
 
 def get_admin_product_ids():
     """Returns a list of product IDs (as strings) created by the current admin."""
@@ -778,6 +952,14 @@ def add_product():
         if not image_urls:
             image_urls.append('https://via.placeholder.com/300')
 
+        # Parse Weight and Free Delivery
+        try:
+            weight = float(request.form.get('weight', 0.5))
+        except ValueError:
+            weight = 0.5
+            
+        free_delivery = 'free_delivery' in request.form
+
         product = {
             'name': request.form['name'],
             'category': request.form['category'],
@@ -790,17 +972,12 @@ def add_product():
             'images': image_urls, # List of all images
             'stock': total_stock, # Total stock calculated from sizes
             'sizes': sizes_list, # List of {'size': 'S', 'stock': 10}
+            'weight': weight,
+            'free_delivery': free_delivery,
             'admin_id': session['user_id'] # Link product to the admin who created it
         }
         db.products.insert_one(product)
         return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/delete_product/<product_id>')
-def delete_product(product_id):
-    if 'user_id' not in session or session.get('role') != 'admin':
-        return redirect(url_for('login'))
-        
-    # Only allow deleting own products
     result = db.products.delete_one({'_id': ObjectId(product_id), 'admin_id': session['user_id']})
     if result.deleted_count == 0:
         flash('Product not found or access denied.', 'error')

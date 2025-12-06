@@ -301,15 +301,18 @@
                             {{ order.status }}
                         </span>
                         <div class="mt-2">
-                            {% if order.status == 'Shipped' %}
+                            {% if order.status == 'Delivered' %}
                             <a href="{{ url_for('request_return', order_id=order._id) }}"
                                 class="btn btn-sm btn-outline-danger me-2"
                                 onclick="return confirm('Are you sure you want to request a return for this order?')">Request
                                 Return</a>
                             {% endif %}
-                            <!-- Assuming there might be an order details page, though not explicitly in the previous file's logic, but the button was there -->
                             <a href="{{ url_for('order_details', order_id=order._id) }}"
                                 class="btn btn-sm btn-outline-primary">View Details</a>
+                            <a href="{{ url_for('invoice', order_id=order._id) }}" class="btn btn-sm btn-secondary"
+                                target="_blank">
+                                <i class="fas fa-file-invoice"></i> Invoice
+                            </a>
                         </div>
                     </div>
                 </div>

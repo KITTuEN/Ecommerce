@@ -53,6 +53,7 @@
             font-size: 1.8rem;
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
@@ -179,6 +180,131 @@
             margin-top: 0.5rem;
         }
 
+        /* Progress Tracker Styles */
+        .track-order {
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .step-wizard {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-wizard-list {
+            list-style-type: none;
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            padding: 0;
+        }
+
+        .step-wizard-item {
+            padding: 0 20px;
+            flex-basis: 0;
+            -webkit-box-flex: 1;
+            -ms-flex-positive: 1;
+            flex-grow: 1;
+            max-width: 100%;
+            display: flex;
+            flex-direction: column;
+            text-align: center;
+            min-width: 170px;
+            position: relative;
+        }
+
+        .step-wizard-item+.step-wizard-item:after {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 19px;
+            background: #e9ecef;
+            width: 100%;
+            height: 2px;
+            transform: translateX(-50%);
+            z-index: -1;
+        }
+
+        .progress-count {
+            height: 40px;
+            width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: 600;
+            margin: 0 auto;
+            position: relative;
+            z-index: 10;
+            color: transparent;
+            background-color: #e9ecef;
+        }
+
+        .progress-count:after {
+            content: "";
+            height: 40px;
+            width: 40px;
+            background: #e9ecef;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            z-index: -10;
+        }
+
+        .progress-label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 10px;
+            color: #6c757d;
+        }
+
+        .current-item .progress-count {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+
+        .current-item~.step-wizard-item .progress-count {
+            background-color: #e9ecef;
+        }
+
+        .current-item~.step-wizard-item .progress-label {
+            color: #6c757d;
+        }
+
+        .current-item .progress-label {
+            color: var(--primary-color);
+        }
+
+        .completed-item .progress-count {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+
+        .completed-item .progress-label {
+            color: var(--primary-color);
+        }
+
+        .completed-item+.step-wizard-item:after {
+            background: var(--primary-color);
+        }
+
+        /* Status Icons */
+        .progress-count i {
+            font-size: 18px;
+            color: #6c757d;
+        }
+
+        .current-item .progress-count i,
+        .completed-item .progress-count i {
+            color: white;
+        }
+
         /* Footer */
         footer {
             background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
@@ -257,6 +383,30 @@
         {% endfor %}
         {% endif %}
         {% endwith %}
+
+        <!-- Order Progress Tracker -->
+        <div class="track-order no-print">
+            <ul class="step-wizard-list">
+                <li
+                    class="step-wizard-item {% if order.status in ['Placed', 'Processing', 'Shipped', 'Delivered'] %}completed-item{% endif %}">
+                    <span class="progress-count"><i class="fas fa-clipboard-check"></i></span>
+                    <span class="progress-label">Placed</span>
+                </li>
+                <li
+                    class="step-wizard-item {% if order.status in ['Processing', 'Shipped', 'Delivered'] %}completed-item{% endif %}">
+                    <span class="progress-count"><i class="fas fa-box-open"></i></span>
+                    <span class="progress-label">Processing</span>
+                </li>
+                <li class="step-wizard-item {% if order.status in ['Shipped', 'Delivered'] %}completed-item{% endif %}">
+                    <span class="progress-count"><i class="fas fa-shipping-fast"></i></span>
+                    <span class="progress-label">Shipped</span>
+                </li>
+                <li class="step-wizard-item {% if order.status == 'Delivered' %}completed-item{% endif %}">
+                    <span class="progress-count"><i class="fas fa-home"></i></span>
+                    <span class="progress-label">Delivered</span>
+                </li>
+            </ul>
+        </div>
 
         <div class="invoice-card">
             <div class="invoice-header">
@@ -359,36 +509,17 @@
                 </table>
             </div>
 
-            <div class="row justify-content-end">
-                <div class="col-md-5 col-lg-4">
-                    <div class="total-section">
-                        <div class="total-row">
-                            <span>Subtotal</span>
-                            <span>₹{{ "%.2f"|format(order.total_amount) }}</span>
-                        </div>
-                        <div class="total-row">
-                            <span>Shipping</span>
-                            <span>Free</span>
-                        </div>
-                        <div class="total-row grand-total">
-                            <span>Total</span>
-                            <span>₹{{ "%.2f"|format(order.total_amount) }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div class="d-flex justify-content-end gap-2 mt-4 no-print border-top pt-4">
                 <a href="{{ url_for('my_orders') }}" class="btn btn-outline-secondary">Back to Orders</a>
-                {% if order.status == 'Shipped' %}
+                {% if order.status == 'Delivered' %}
                 <a href="{{ url_for('request_return', order_id=order._id) }}" class="btn btn-danger"
                     onclick="return confirm('Are you sure you want to request a return for this order?')">
                     Request Return
                 </a>
                 {% endif %}
-                <button onclick="window.print()" class="btn btn-primary">
-                    <i class="fas fa-print me-2"></i> Print Invoice
-                </button>
+                <a href="{{ url_for('invoice', order_id=order._id) }}" class="btn btn-primary" target="_blank">
+                    <i class="fas fa-file-invoice me-2"></i> View Invoice
+                </a>
             </div>
         </div>
     </div>
@@ -432,6 +563,15 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-12 text-center">
+                    {% if settings %}
+                    <div class="mb-3">
+                        <h5 class="mb-1">{{ settings.company_name }}</h5>
+                        <p class="text-muted mb-0">
+                            {{ settings.email }} | {{ settings.phone }}
+                        </p>
+                        <p class="text-muted small">{{ settings.address }}</p>
+                    </div>
+                    {% endif %}
                     <p class="mb-0">&copy; 2023 Men's Shop. All rights reserved.</p>
                 </div>
             </div>

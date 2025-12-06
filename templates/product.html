@@ -277,21 +277,41 @@
                     <h1 class="product-title">{{ product.name }}</h1>
                     <p class="product-category">
                         Brand: <strong>{{ product.brand|title }}</strong> |
-                        Fabric: <strong>{{ product.fabric|title }}</strong>
-                    </p>
 
-                    <div class="d-flex align-items-center mb-4">
-                        <div class="product-price me-3">₹{{ product.price }}</div>
-                        {% if product.stock > 0 %}
-                        <span class="badge bg-success">In Stock</span>
-                        {% else %}
-                        <span class="badge bg-danger">Out of Stock</span>
-                        {% endif %}
-                    </div>
-
-                    <div class="product-description">
-                        <h5>Description</h5>
-                        <p>{{ product.description }}</p>
+                        <!-- Product Details Section -->
+                    <div class="product-details mb-4">
+                        <h5 class="mb-3">Product Details</h5>
+                        <table class="table table-borderless table-sm">
+                            <tbody>
+                                <tr>
+                                    <th scope="row" class="text-muted" style="width: 120px;">Brand</th>
+                                    <td>{{ product.brand|title }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row" class="text-muted">Category</th>
+                                    <td>{{ product.category|title }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row" class="text-muted">Color</th>
+                                    <td>{{ product.color|title }}</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row" class="text-muted">Fabric</th>
+                                    <td>{{ product.fabric|title }}</td>
+                                </tr>
+                                {% if product.sizes %}
+                                <tr>
+                                    <th scope="row" class="text-muted">Available Sizes</th>
+                                    <td>
+                                        {% for size in product.sizes %}
+                                        {% set size_val = size.size if size is mapping else size %}
+                                        <span class="badge bg-light text-dark border me-1">{{ size_val }}</span>
+                                        {% endfor %}
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
                     </div>
 
                     <form action="{{ url_for('add_to_cart', product_id=product['_id']) }}" method="POST">
