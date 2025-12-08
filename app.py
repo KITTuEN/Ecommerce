@@ -120,6 +120,14 @@ def get_user_recommendations(user_id):
     return unique_recs[:4] # Return top 4
 
 # Routes
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+@app.route('/contact')
+def contact():
+    return render_template('contact.html')
+
 @app.route('/')
 def index():
     query = {}
@@ -237,6 +245,17 @@ def index():
         # Only show recommendations on main landing (no filters active) and first page
         recommendations = get_user_recommendations(session['user_id'])
     
+    # Calculate ratings for products
+    for product in products:
+        product_reviews = list(db.reviews.find({'product_id': str(product['_id'])}))
+        if product_reviews:
+            avg_rating = sum(r['rating'] for r in product_reviews) / len(product_reviews)
+            product['average_rating'] = round(avg_rating, 1)
+            product['review_count'] = len(product_reviews)
+        else:
+            product['average_rating'] = 0
+            product['review_count'] = 0
+            
     return render_template('index.html', products=products, 
                          categories=categories, brands=brands, colors=colors, fabrics=fabrics, sizes=sizes,
                          selected_category=category_filter, selected_brand=brand_filter, 
@@ -356,7 +375,18 @@ def add_review(product_id):
     }
     db.reviews.insert_one(review)
     flash('Review submitted successfully!', 'success')
-    return redirect(url_for('product_detail', product_id=product_id))
+    
+    # Redirect back to the order details page if possible, otherwise my orders
+    # We need to find the order ID to redirect back to the specific order
+    order = db.orders.find_one({
+        'user_id': user_id,
+        'items.product_id': product_id,
+        'status': 'Delivered'
+    })
+    
+    if order:
+        return redirect(url_for('order_details', order_id=order['_id']))
+    return redirect(url_for('my_orders'))
 
 @app.route('/product/<product_id>')
 def product_detail(product_id):
@@ -369,7 +399,35 @@ def product_detail(product_id):
     # Fetch reviews
     reviews = list(db.reviews.find({'product_id': product_id}).sort('created_at', -1))
     
-    return render_template('product.html', product=product, recommendations=recommendations, reviews=reviews)
+    # Calculate average rating
+    if reviews:
+        avg_rating = sum(r['rating'] for r in reviews) / len(reviews)
+        product['average_rating'] = round(avg_rating, 1)
+        product['review_count'] = len(reviews)
+    else:
+        product['average_rating'] = 0
+        product['review_count'] = 0
+        
+    # Check if user can review
+    can_review = False
+    if 'user_id' in session:
+        # Check if user has purchased and received the product
+        has_purchased = db.orders.find_one({
+            'user_id': session['user_id'],
+            'items.product_id': product_id,
+            'status': 'Delivered'
+        })
+        
+        # Check if user has already reviewed
+        has_reviewed = db.reviews.find_one({
+            'user_id': session['user_id'],
+            'product_id': product_id
+        })
+        
+        if has_purchased and not has_reviewed:
+            can_review = True
+    
+    return render_template('product.html', product=product, recommendations=recommendations, reviews=reviews, can_review=can_review)
 
 @app.route('/checkout', methods=['GET', 'POST'])
 @login_required
@@ -385,6 +443,8 @@ def checkout():
             product['quantity'] = item['quantity']
             product['size'] = item.get('size')
             product['total'] = product['price'] * item['quantity']
+            if 'image_url' not in product or not product['image_url']:
+                product['image_url'] = 'https://via.placeholder.com/150'
             cart_items.append(product)
             total_price += product['total']
             
@@ -431,7 +491,8 @@ def checkout():
                 'price': product['price'],
                 'quantity': item['quantity'],
                 'size': requested_size,
-                'image_url': product['image_url'],
+                'size': requested_size,
+                'image_url': product.get('image_url', 'https://via.placeholder.com/150'),
                 'free_delivery': product.get('free_delivery', False)
             })
             calculated_total += product['price'] * item['quantity']
@@ -606,9 +667,17 @@ def profile():
         new_password = request.form.get('new_password')
         confirm_password = request.form.get('confirm_password')
         
-        # Update Name
-        if name and name != user['name']:
-            db.users.update_one({'_id': ObjectId(user_id)}, {'$set': {'name': name}})
+        # Update Name and Address
+        update_data = {'name': name}
+        
+        # Add address fields if present
+        address_fields = ['address', 'city', 'state', 'zip', 'phone']
+        for field in address_fields:
+            if request.form.get(field):
+                update_data[field] = request.form.get(field)
+                
+        if name:
+            db.users.update_one({'_id': ObjectId(user_id)}, {'$set': update_data})
             session['user_name'] = name
             flash('Profile updated successfully.', 'success')
             
@@ -703,6 +772,8 @@ def cart():
                 product['quantity'] = item['quantity']
                 product['size'] = item.get('size')
                 product['total'] = product['price'] * item['quantity']
+                if 'image_url' not in product or not product['image_url']:
+                    product['image_url'] = 'https://via.placeholder.com/150'
                 cart_items.append(product)
                 total_price += product['total']
         
@@ -805,7 +876,7 @@ def add_to_wishlist(product_id):
     flash('Added to wishlist!', 'success')
     return redirect(url_for('wishlist'))
 
-@app.route('/remove_from_wishlist/<product_id>')
+@app.route('/remove_from_wishlist/<product_id>', methods=['POST'])
 @login_required
 def remove_from_wishlist(product_id):
     user_id = session.get('user_id')

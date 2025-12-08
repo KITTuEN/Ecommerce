@@ -1,373 +1,95 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shopping Cart - Men's Shop</title>
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;700;800&display=swap"
-        rel="stylesheet">
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% block title %}Shopping Cart - BRAEV{% endblock %}
 
-    <style>
-        :root {
-            --primary-color: #667eea;
-            --secondary-color: #764ba2;
-            --text-dark: #2c3e50;
-            --text-muted: #6c757d;
-            --bg-light: #f8f9fa;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f5f7fa;
-            color: var(--text-dark);
-        }
-
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6,
-        .navbar-brand {
-            font-family: 'Outfit', sans-serif;
-        }
-
-        /* Navbar */
-        .navbar {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
-            padding: 1rem 0;
-        }
-
-        .navbar-brand {
-            font-weight: 800;
-            font-size: 1.8rem;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .nav-link {
-            font-weight: 500;
-            color: var(--text-dark);
-            margin: 0 0.5rem;
-        }
-
-        .nav-link:hover {
-            color: var(--primary-color);
-        }
-
-        /* Cart Styles */
-        .cart-container {
-            margin-top: 3rem;
-        }
-
-        .page-title {
-            font-weight: 700;
-            margin-bottom: 2rem;
-            color: var(--text-dark);
-        }
-
-        .cart-table {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
-            margin-bottom: 2rem;
-        }
-
-        .cart-table thead {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-        }
-
-        .cart-table th {
-            font-weight: 600;
-            border: none;
-            padding: 1rem;
-        }
-
-        .cart-table td {
-            vertical-align: middle;
-            padding: 1rem;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .cart-item-img {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 10px;
-        }
-
-        .item-name {
-            font-weight: 600;
-            color: var(--text-dark);
-            text-decoration: none;
-        }
-
-        .item-meta {
-            font-size: 0.9rem;
-            color: #6c757d;
-        }
-
-        .quantity-input {
-            width: 70px;
-            text-align: center;
-            border-radius: 8px;
-            border: 1px solid #ced4da;
-        }
-
-        .btn-remove {
-            color: #dc3545;
-            background: rgba(220, 53, 69, 0.1);
-            border: none;
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-
-        .btn-remove:hover {
-            background: #dc3545;
-            color: white;
-        }
-
-        .summary-card {
-            background: white;
-            border-radius: 15px;
-            padding: 1.5rem;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
-        }
-
-        .summary-title {
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid #f0f0f0;
-        }
-
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 1rem;
-            color: #555;
-        }
-
-        .summary-total {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 2px solid #f0f0f0;
-            font-weight: 700;
-            font-size: 1.2rem;
-            color: var(--text-dark);
-        }
-
-        .btn-checkout {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            border: none;
-            padding: 1rem;
-            border-radius: 10px;
-            font-weight: 600;
-            width: 100%;
-            margin-top: 1.5rem;
-            transition: transform 0.2s;
-        }
-
-        .btn-checkout:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-            color: white;
-        }
-
-        .empty-cart {
-            text-align: center;
-            padding: 5rem 0;
-        }
-
-        .empty-cart i {
-            font-size: 4rem;
-            color: #dee2e6;
-            margin-bottom: 1.5rem;
-        }
-
-        /* Footer */
-        footer {
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            color: white;
-            padding: 3rem 0;
-            margin-top: 5rem;
-        }
-    </style>
-</head>
-
-<body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg sticky-top">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('index') }}">Men's Shop</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Home</a></li>
-                    {% if session.get('user_id') %}
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('wishlist') }}">Wishlist</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('my_orders') }}">My Orders</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('profile') }}">Profile</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="{{ url_for('cart') }}"><i
-                                class="fas fa-shopping-cart"></i> Cart</a></li>
-                    <li class="nav-item"><a class="nav-link btn btn-sm btn-outline-danger ms-2 text-danger"
-                            href="{{ url_for('logout') }}"
-                            style="border: 1px solid #dc3545; padding: 5px 15px;">Logout</a></li>
-                    {% else %}
-                    <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Login</a></li>
-                    <li class="nav-item"><a class="nav-link btn btn-primary text-white ms-2 px-3 py-1"
-                            href="{{ url_for('register') }}" style="background: var(--primary-color);">Sign Up</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="{{ url_for('cart') }}"><i
-                                class="fas fa-shopping-cart"></i></a></li>
-                    {% endif %}
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container cart-container">
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show mb-4" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        {% endfor %}
-        {% endif %}
-        {% endwith %}
-
-        <h1 class="page-title">Shopping Cart</h1>
-
-        {% if cart_items %}
-        <div class="row">
-            <div class="col-lg-8">
-                <div class="table-responsive cart-table">
-                    <table class="table table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th scope="col">Product</th>
-                                <th scope="col">Price</th>
-                                <th scope="col">Quantity</th>
-                                <th scope="col">Total</th>
-                                <th scope="col">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in cart_items %}
-                            <tr>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <img src="{{ item.image_url }}" alt="{{ item.name }}"
-                                            class="cart-item-img me-3">
-                                        <div>
-                                            <a href="{{ url_for('product_detail', product_id=item['_id']) }}"
-                                                class="item-name d-block">{{ item.name }}</a>
-                                            <small class="item-meta">
-                                                Size: {{ item.size.size if item.size is mapping else item.size }} |
-                                                Color: {{ item.color|title }}
-                                            </small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>₹{{ item.price }}</td>
-                                <td>
-                                    <form action="{{ url_for('update_cart', product_id=item['_id']) }}" method="POST"
-                                        class="d-flex align-items-center">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                        <input type="hidden" name="size"
-                                            value="{{ item.size.size if item.size is mapping else item.size }}">
-                                        <input type="hidden" name="color" value="{{ item.color }}">
-                                        <input type="number" name="quantity" value="{{ item.quantity }}" min="1"
-                                            class="form-control quantity-input me-2" onchange="this.form.submit()">
-                                    </form>
-                                </td>
-                                <td class="fw-bold">₹{{ item.price * item.quantity }}</td>
-                                <td>
-                                    <a href="{{ url_for('remove_from_cart', product_id=item['_id'], size=item.size.size if item.size is mapping else item.size, color=item.color) }}"
-                                        class="btn-remove" title="Remove">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="col-lg-4">
-                <div class="summary-card sticky-top" style="top: 100px;">
-                    <h3 class="summary-title">Order Summary</h3>
-                    <div class="summary-row">
-                        <span>Subtotal</span>
-                        <span>₹{{ total_price }}</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>Shipping</span>
-                        <span class="text-muted small">Calculated at Checkout</span>
-                    </div>
-                    <div class="summary-total">
-                        <span>Total</span>
-                        <span>₹{{ total_price }}</span>
-                    </div>
-                    <a href="{{ url_for('checkout') }}" class="btn btn-checkout text-center text-decoration-none">
-                        Proceed to Checkout <i class="fas fa-arrow-right ms-2"></i>
-                    </a>
-                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary w-100 mt-3 border-0">
-                        <i class="fas fa-arrow-left me-2"></i> Continue Shopping
-                    </a>
-                </div>
-            </div>
-        </div>
-        {% else %}
-        <div class="empty-cart">
-            <i class="fas fa-shopping-basket"></i>
-            <h3>Your cart is empty</h3>
-            <p class="text-muted mb-4">Looks like you haven't added anything to your cart yet.</p>
-            <a href="{{ url_for('index') }}" class="btn btn-primary px-4 py-2 rounded-pill">Start Shopping</a>
-        </div>
-        {% endif %}
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0">Shopping Cart</h1>
+        <span class="text-muted">{{ cart_items|length }} items</span>
     </div>
 
-    <footer>
-        <div class="container">
-            <div class="row">
-                <div class="col-md-12 text-center">
-                    <p class="mb-0">&copy; 2023 Men's Shop. All rights reserved.</p>
+    {% if cart_items %}
+    <div class="row g-5">
+        <div class="col-lg-8">
+            <div class="d-flex flex-column gap-3">
+                {% for item in cart_items %}
+                <div class="card border p-3">
+                    <div class="d-flex gap-3 align-items-center">
+                        <img src="{{ item.image_url }}" alt="{{ item.name }}" class="rounded"
+                            style="width: 80px; height: 100px; object-fit: cover;">
+
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between mb-1">
+                                <h5 class="mb-0 fs-6"><a href="{{ url_for('product_detail', product_id=item['_id']) }}"
+                                        class="text-decoration-none text-dark">{{ item.name }}</a></h5>
+                                <span class="fw-bold">₹{{ item.total }}</span>
+                            </div>
+
+                            <div class="text-muted small mb-2">
+                                {% if item.size %}Size: {{ item.size }}{% endif %}
+                                {% if item.size and item.color %} | {% endif %}
+                                {% if item.color %}Color: {{ item.color|title }}{% endif %}
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <form action="{{ url_for('update_cart', product_id=item['_id']) }}" method="POST"
+                                    class="d-flex align-items-center gap-2">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="size" value="{{ item.size }}">
+                                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1"
+                                        class="form-control form-control-sm text-center" style="width: 60px;">
+                                    <button type="submit"
+                                        class="btn btn-link text-muted p-0 text-decoration-none"><small>Update</small></button>
+                                </form>
+
+                                <a href="{{ url_for('remove_from_cart', product_id=item['_id'], size=item.size) }}"
+                                    class="text-danger small text-decoration-none">Remove</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card bg-light p-4 border-0 rounded-3 sticky-top" style="top: 100px;">
+                <h4 class="h5 mb-4">Order Summary</h4>
+
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Subtotal</span>
+                    <span>₹{{ total_price }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="text-muted">Shipping</span>
+                    <span class="text-success">Free</span>
+                </div>
+
+                <hr class="my-3">
+
+                <div class="d-flex justify-content-between mb-4">
+                    <span class="fw-bold">Total</span>
+                    <span class="fw-bold fs-5">₹{{ total_price }}</span>
+                </div>
+
+                <a href="{{ url_for('checkout') }}" class="btn btn-dark w-100 py-3">Proceed to Checkout</a>
+
+                <div class="mt-4 text-center">
+                    <small class="text-muted"><i class="fas fa-lock me-1"></i> Secure Checkout</small>
                 </div>
             </div>
         </div>
-    </footer>
-
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-
-</html>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <div class="mb-4">
+            <i class="fas fa-shopping-bag fa-3x text-muted opacity-25"></i>
+        </div>
+        <h3 class="h4 text-muted mb-3">Your cart is empty</h3>
+        <p class="text-muted mb-4">Looks like you haven't added anything to your cart yet.</p>
+        <a href="{{ url_for('index') }}" class="btn btn-dark px-4">Start Shopping</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
