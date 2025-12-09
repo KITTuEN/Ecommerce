@@ -114,6 +114,11 @@ a:hover {
     border-bottom: none;
 }
 
+.navbar-solid {
+    background-color: black;
+    position: relative;
+}
+
 .navbar-brand {
     font-weight: 400;
     font-size: 1.5rem;
